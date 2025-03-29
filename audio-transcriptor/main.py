@@ -3,16 +3,16 @@ import json
 from vosk import Model, KaldiRecognizer
 
 def main():
-    # Путь к папке с распакованной моделью (проверьте, что внутри есть файлы типа "am/final.mdl" и т.д.)
-    model_path = "model/vosk-model-small-ru-0.22/vosk-model-small-ru-0.22"  # замените на свой путь
+    # Path to the model directory
+    model_path = "model/vosk-model-small-ru-0.22"
     
-    # Инициализируем модель
+    # Initialize model
     model = Model(model_path)
     
-    # Создаём распознаватель (Recognizer) с частотой 16 кГц
+    # Create Recognizer, 16 kHz frequency
     rec = KaldiRecognizer(model, 16000)
     
-    # Настраиваем PyAudio
+    # Tune PyAudio
     p = pyaudio.PyAudio()
     stream = p.open(
         format=pyaudio.paInt16,
@@ -23,35 +23,35 @@ def main():
     )
     stream.start_stream()
     
-    print("Система инициализирована. Начинаем распознавание...")
+    print("System initialized. Listening...")
 
     try:
         while True:
-            # Считываем данные из микрофона
+            # Read data from microphone
             data = stream.read(4000, exception_on_overflow=False)
             
-            # Если нет звука, пропускаем
+            # Skip if no sound
             if len(data) == 0:
                 continue
             
-            # Отправляем данные в распознаватель
+            # Send data to recognizer
             if rec.AcceptWaveform(data):
                 result = rec.Result()
-                # Преобразуем результат в JSON-формат
+                # Convert result to JSON
                 text_json = json.loads(result)
-                # Получаем распознанный текст
+                # Output recognized text
                 recognized_text = text_json.get("text", "")
                 if recognized_text:
-                    print(f"Распознано (полная фраза): {recognized_text}")
+                    print(f"Recognized (full phraze): {recognized_text}")
             else:
-                # Частичный результат (в процессе говорения)
+                # Partial result (speaking in progress)
                 partial_result = rec.PartialResult()
                 partial_json = json.loads(partial_result)
                 partial_text = partial_json.get("partial", "")
                 if partial_text:
-                    print(f"Частичные субтитры: {partial_text}", end="\r")
+                    print(f"Partial text (speaking): {partial_text}", end="\r")
     except KeyboardInterrupt:
-        print("\nОстановлено пользователем.")
+        print("\n Aborted by user.")
     finally:
         # Завершаем работу с аудиопотоком
         stream.stop_stream()
