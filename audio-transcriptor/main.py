@@ -38,12 +38,12 @@ def main():
     )
     stream.start_stream()
     print("System initialized. Listening...")
-    # Create a new markdown file with a timestamp
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    filename = f"transcript/transcript_of_{timestamp}.md"
+    # Create a new markdown file with a start-point timestamp
+    start_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    filename = f"transcript/transcript_of_{start_timestamp}.md"
     with open(filename, "w", encoding="utf-8") as trancript_file:
         trancript_file.write(f"# Transcript of Conversation\n\n")
-        trancript_file.write(f"## Started at {timestamp}\n\n")
+        trancript_file.write(f"## Started at {start_timestamp}\n\n")
         try:
             while True:
                 # Read audio from microphone
@@ -60,9 +60,11 @@ def main():
                     recognized_text = text_json.get("text", "")
                     if recognized_text:
                         print(f"Recognized (full phrase): {recognized_text}")
+                        # Create timestamp for the recognized phrase
+                        phrase_timestamp = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
                         # Use the microphone name as the speaker label
                         trancript_file.write(
-                            f"- **{microphone_name} [{timestamp}]**: {recognized_text}\n"
+                            f"- **{microphone_name} [{phrase_timestamp}]**: {recognized_text}\n"
                         )
                 else:
                     # Partial result (speaking in progress)
