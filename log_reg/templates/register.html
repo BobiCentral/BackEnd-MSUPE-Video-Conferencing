@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Регистрация</title>
+</head>
+<body>
+<h1>Регистрация</h1>
+{{if .ErrorMessage}}<p style="color:red">{{.ErrorMessage}}</p>{{end}}
+<form method="POST">
+    <!-- Поле для имени (будет записано в users.username) -->
+    <input type="text" name="username" placeholder="Ваше Имя или ФИО" value="{{.Username}}" required>
+    <!-- Поле для Email (будет использоваться для входа) -->
+    <input type="email" name="email" placeholder="Email (для входа)" value="{{.Email}}" required>
+    <!-- Поле для пароля -->
+    <input type="password" name="password" placeholder="Пароль" required>
+    <button type="submit">Зарегистрироваться</button>
+</form>
+</body>
+</html>
