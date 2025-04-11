@@ -1,7 +1,7 @@
 go install github.com/pressly/goose/v3/cmd/goose@latest
 mkdir -p db/migrations 
-goose -dir db/migrations create ruscord sql 
-goose -dir db/migrations postgres "postgresql://postgres:ruscord1@localhost:5432/ruscord?sslmode=disable" up
+goose -dir db/migrations create ruscord sql
+goose -dir db/migrations postgres "postgresql://postgres:2440894@localhost:5432/Mixa?sslmode=disable" up
 
 --SELECT users.id, users.username, conferences.id, conferences.conf_title FROM users JOIN conferences ON users.id = conferences.host_id;
 
