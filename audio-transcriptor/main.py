@@ -5,18 +5,30 @@ from datetime import datetime
 import os
 
 
+def get_speaker_name(pyaudio_instance):
+    # Get the name of the default input device
+    info = pyaudio_instance.get_host_api_info_by_index(0)
+    num_devices = info.get("deviceCount")
+
+    for i in range(0, num_devices):
+        device_info = pyaudio_instance.get_device_info_by_index(i)
+        if device_info.get("maxInputChannels") > 0:
+            # Return the name of the first active input source found
+            return device_info.get("name")
+
+    return "Unknown Speaker"
+
+
 def main():
     # Path to the model directory
     model_path = "model/vosk-model-small-ru-0.22"
-
     # Initialize model
     model = Model(model_path)
-
     # Create Recognizer, 16 kHz frequency
     recognizer = KaldiRecognizer(model, 16000)
-
     # Setup PyAudio
     audio_channel = pyaudio.PyAudio()
+    microphone_name = get_speaker_name(audio_channel)
     stream = audio_channel.open(
         format=pyaudio.paInt16,
         channels=1,
@@ -25,23 +37,20 @@ def main():
         frames_per_buffer=8000,
     )
     stream.start_stream()
-
     print("System initialized. Listening...")
-
-    # Create a new text file with a timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"transcript/recognized_text_{timestamp}.txt"
-
-    with open(filename, "w", encoding="utf-8") as text_file:
+    # Create a new markdown file with a timestamp
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    filename = f"transcript/transcript_of_{timestamp}.md"
+    with open(filename, "w", encoding="utf-8") as trancript_file:
+        trancript_file.write(f"# Transcript of Conversation\n\n")
+        trancript_file.write(f"## Started at {timestamp}\n\n")
         try:
             while True:
                 # Read audio from microphone
                 data = stream.read(4000, exception_on_overflow=False)
-
                 # Check for silence
                 if len(data) == 0:
                     continue
-
                 # Send data to recognizer
                 if recognizer.AcceptWaveform(data):
                     result = recognizer.Result()
@@ -50,9 +59,10 @@ def main():
                     # Output recognized text
                     recognized_text = text_json.get("text", "")
                     if recognized_text:
-                        print(f"Recognized (full phraze): {recognized_text}")
-                        text_file.write(
-                            f"Recognized (full phrase): {recognized_text}\n"
+                        print(f"Recognized (full phrase): {recognized_text}")
+                        # Use the microphone name as the speaker label
+                        trancript_file.write(
+                            f"- **{microphone_name} [{timestamp}]**: {recognized_text}\n"
                         )
                 else:
                     # Partial result (speaking in progress)
@@ -68,7 +78,6 @@ def main():
             stream.stop_stream()
             stream.close()
             audio_channel.terminate()
-
     # Check if the file is empty and delete if it is
     if os.path.getsize(filename) == 0:
         os.remove(filename)
