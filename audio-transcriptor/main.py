@@ -9,13 +9,11 @@ def get_speaker_name(pyaudio_instance):
     # Get the name of the default input device
     info = pyaudio_instance.get_host_api_info_by_index(0)
     num_devices = info.get("deviceCount")
-
     for i in range(0, num_devices):
         device_info = pyaudio_instance.get_device_info_by_index(i)
         if device_info.get("maxInputChannels") > 0:
             # Return the name of the first active input source found
             return device_info.get("name")
-
     return "Unknown Speaker"
 
 
@@ -44,6 +42,8 @@ def main():
     with open(filename, "w", encoding="utf-8") as trancript_file:
         trancript_file.write(f"# Transcript of Conversation\n\n")
         trancript_file.write(f"## Started at {start_timestamp}\n\n")
+
+        recognized_any_text = False  # Flag to track if any text was recognized
         try:
             while True:
                 # Read audio from microphone
@@ -61,10 +61,15 @@ def main():
                     if recognized_text:
                         print(f"Recognized (full phrase): {recognized_text}")
                         # Create timestamp for the recognized phrase
-                        phrase_timestamp = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
+                        phrase_timestamp = datetime.now().strftime(
+                            "%Y.%m.%d -- %H:%M:%S"
+                        )
                         # Use the microphone name as the speaker label
                         trancript_file.write(
                             f"- **{microphone_name} [{phrase_timestamp}]**: {recognized_text}\n"
+                        )
+                        recognized_any_text = (
+                            True  # Set flag to True if text is recognized
                         )
                 else:
                     # Partial result (speaking in progress)
@@ -80,8 +85,8 @@ def main():
             stream.stop_stream()
             stream.close()
             audio_channel.terminate()
-    # Check if the file is empty and delete if it is
-    if os.path.getsize(filename) == 0:
+    # Check if the file is empty or no text was recognized and delete if necessary
+    if os.path.getsize(filename) == 0 or not recognized_any_text:
         os.remove(filename)
         print(f"Deleted empty file: {filename}")
     else:
